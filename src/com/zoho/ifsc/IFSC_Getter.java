@@ -12,6 +12,9 @@ import org.jsoup.nodes.Element;
 
 public class IFSC_Getter
 {
+	static ArrayList<String> NEFT_headers = new ArrayList<>();
+	static ArrayList<String> RTGS_headers = new ArrayList<>();
+	static ArrayList<String> NACH_headers = new ArrayList<>();
 	static ArrayList<ArrayList<String>> NEFT_valid = new ArrayList<>();
 	static ArrayList<ArrayList<String>> NEFT_invalid = new ArrayList<>();
 	static ArrayList<ArrayList<String>> RTGS_valid = new ArrayList<>();
@@ -58,45 +61,31 @@ public class IFSC_Getter
 		}
 	}
 	
+	//create excel headers
+	public static XSSFSheet create_sheet(String sheetname, ArrayList<String> headers, XSSFWorkbook workbook)
+	{
+		XSSFSheet sheet1 = workbook.createSheet(sheetname);
+		Row ro1 = sheet1.createRow(0);
+		for(int iter=0;iter<headers.size();iter++)
+		{
+			ro1.createCell(iter).setCellValue(headers.get(iter));
+		}
+		return sheet1;
+	}
+	
 	//store data and save file method
-	public static void insert_data(ArrayList<ArrayList<String>> a,ArrayList<ArrayList<String>> b,ArrayList<ArrayList<String>> c,ArrayList<ArrayList<String>> d,ArrayList<ArrayList<String>> e,ArrayList<ArrayList<String>> f) throws Exception
+	public static void insert_data(ArrayList<String> neft_header, ArrayList<String> rtgs_header, ArrayList<String> nach_header, ArrayList<ArrayList<String>> a,ArrayList<ArrayList<String>> b,ArrayList<ArrayList<String>> c,ArrayList<ArrayList<String>> d,ArrayList<ArrayList<String>> e,ArrayList<ArrayList<String>> f) throws Exception
 	{
 		FileOutputStream xlsOutputStream = new FileOutputStream(new File(valid_final_file_name));
 		FileOutputStream xlsOutputStream2 = new FileOutputStream(new File(invalid_final_file_name));
 		XSSFWorkbook workbook = new XSSFWorkbook();
 		XSSFWorkbook workbook2 = new XSSFWorkbook();
-		XSSFSheet sheet1 = workbook.createSheet("NEFT");
-		Row ro1 = sheet1.createRow(0);
-		ro1.createCell(0).setCellValue("Bank Name");
-		ro1.createCell(1).setCellValue("IFSC CODE");
-		ro1.createCell(2).setCellValue("Branch");
-		XSSFSheet sheet2 = workbook.createSheet("RTGS");
-		ro1 = sheet2.createRow(0);
-		ro1.createCell(0).setCellValue("Bank Name");
-		ro1.createCell(1).setCellValue("IFSC CODE");
-		ro1.createCell(2).setCellValue("Branch");
-		XSSFSheet sheet3 = workbook.createSheet("NACH");
-		ro1 = sheet3.createRow(0);
-		ro1.createCell(0).setCellValue("Branch Code");
-		ro1.createCell(1).setCellValue("Bank Name");
-		ro1.createCell(2).setCellValue("IFSC CODE");
-		ro1.createCell(3).setCellValue("MICR");
-		XSSFSheet sheet4 = workbook2.createSheet("NEFT");
-		ro1 = sheet4.createRow(0);
-		ro1.createCell(0).setCellValue("Bank Name");
-		ro1.createCell(1).setCellValue("IFSC CODE");
-		ro1.createCell(2).setCellValue("Branch");
-		XSSFSheet sheet5 = workbook2.createSheet("RTGS");
-		ro1 = sheet5.createRow(0);
-		ro1.createCell(0).setCellValue("Bank Name");
-		ro1.createCell(1).setCellValue("IFSC CODE");
-		ro1.createCell(2).setCellValue("Branch");
-		XSSFSheet sheet6 = workbook2.createSheet("NACH");
-		ro1 = sheet6.createRow(0);
-		ro1.createCell(0).setCellValue("Branch Code");
-		ro1.createCell(1).setCellValue("Bank Name");
-		ro1.createCell(2).setCellValue("IFSC CODE");
-		ro1.createCell(3).setCellValue("MICR");
+		XSSFSheet sheet1 = create_sheet("NEFT",neft_header,workbook);
+		XSSFSheet sheet2 = create_sheet("RTGS",rtgs_header,workbook);
+		XSSFSheet sheet3 = create_sheet("NACH",nach_header,workbook);
+		XSSFSheet sheet4 = create_sheet("NEFT",neft_header,workbook2);
+		XSSFSheet sheet5 = create_sheet("RTGS",rtgs_header,workbook2);
+		XSSFSheet sheet6 = create_sheet("NACH",nach_header,workbook2);
 		try {
 			add_data(sheet1,a);
 			add_data(sheet2,b);
@@ -117,7 +106,9 @@ public class IFSC_Getter
 	//split records into valid and invalid
 	public static ArrayList<ArrayList<ArrayList<String>>> insert_records(String file_name, int sheet_start)
 	{
+		ArrayList<String> header = new ArrayList<>();
 		ArrayList<ArrayList<String>> valid = new ArrayList<>();
+		ArrayList<ArrayList<String>> headers = new ArrayList<>();
 		ArrayList<ArrayList<String>> invalid = new ArrayList<>();
 		ArrayList<ArrayList<ArrayList<String>>> output = new ArrayList<>();
 		dup_count = 0;
@@ -130,23 +121,19 @@ public class IFSC_Getter
 			while (i < wb.getNumberOfSheets())
 			{
 				int ifsc_index=0;
-				int bank_index=0;
-				int branch_index=0;
-				XSSFSheet sheet = wb.getSheetAt(i);		
+				int micr_index=0;
+				XSSFSheet sheet = wb.getSheetAt(i);	
 				for(int iter=0;iter<sheet.getRow(0).getPhysicalNumberOfCells();iter++)
 				{
 					String field = sheet.getRow(0).getCell(iter).getStringCellValue();
+					header.add(field);
 					if(field.contains("IFSC")==true || field.contains("Ifsc")==true)
 					{
 						ifsc_index = iter;
 					}
-					else if(field.contains("BRANCH")==true || field.contains("Branch")==true)
+					else if(field.contains("MICR")==true || field.contains("Micr")==true)
 					{
-						branch_index = iter;
-					}
-					else if(field.contains("BANK")==true || field.contains("Bank")==true)
-					{
-						bank_index = iter;
+						micr_index = iter;
 					}
 				}
 				for (int j=1;j<=sheet.getLastRowNum();j++)
@@ -182,9 +169,25 @@ public class IFSC_Getter
 						temp.add(value.trim());
 					}
 					String ifsc = temp.get(ifsc_index).trim();
-					data.add(temp.get(bank_index).trim());
-					data.add(temp.get(ifsc_index).trim());
-					data.add(temp.get(branch_index).trim());
+					for(int k=0;k<temp.size();k++)
+					{
+						if(k==micr_index)
+						{
+							String mic = (temp.get(micr_index).trim().substring(0,temp.get(micr_index).trim().length()-2));
+							if(mic.length()!=9)
+							{
+								data.add(String.format("%1$-" + 9 + "s", mic).replace(' ', '0'));
+							}
+							else
+							{
+								data.add(mic);
+							}
+						}
+						else
+						{
+							data.add(temp.get(k).trim());	
+						}
+					}
 					if (ifsc.trim().length() == 11 && !(ifsc_check.contains(ifsc.trim())))
 					{
 						valid.add(data);
@@ -208,8 +211,10 @@ public class IFSC_Getter
 		{
 			e.printStackTrace();
 		}
+		headers.add(header);
 		output.add(valid);
 		output.add(invalid);
+		output.add(headers);
 		return output;
 	}
 	
@@ -275,25 +280,14 @@ public class IFSC_Getter
 		    Element table = doc.select("table").get(0);
 		    Iterator<Element> ite = table.select("td").iterator();
 		    Iterator<Element> iter2 = table.select("th").iterator();
-		    int ifsc_index=0,branch_code_index=0,bank_index=0,micr_index=0,i=0;
+		    int ifsc_index=0,i=0;
 		    while(iter2.hasNext())
 		    {
 		    	String field = iter2.next().text();
+		    	NACH_headers.add(field);
 		    	if(field.contains("IFSC")==true || field.contains("Ifsc")==true)
 				{
-					ifsc_index = i-1;
-				}
-				else if(field.contains("CODE")==true || field.contains("Code")==true)
-				{
-					branch_code_index = i-1;
-				}
-				else if(field.contains("Name")==true || field.contains("NAME")==true)
-				{
-					bank_index = i-1;
-				}
-				else if(field.contains("Micr")==true || field.contains("MICR")==true)
-				{
-					micr_index = i-1;
+					ifsc_index = i;
 				}
 		    	i++;
 		    }
@@ -303,7 +297,7 @@ public class IFSC_Getter
 		    {
 		    	ArrayList<String> temp = new ArrayList<>();
 		    	ArrayList<String> data = new ArrayList<>();
-		    	ite.next();
+		    	temp.add(ite.next().text());
 		        temp.add(ite.next().text());
 		        temp.add(ite.next().text());
 		        temp.add(ite.next().text());
@@ -313,12 +307,9 @@ public class IFSC_Getter
 		        temp.add(ite.next().text());
 		        temp.add(ite.next().text());
 		        temp.add(ite.next().text());
-		        ite.next();
+		        temp.add(ite.next().text());
 		        String ifsc = temp.get(ifsc_index).trim();
-		        data.add(temp.get(branch_code_index).trim());
-				data.add(temp.get(bank_index).trim());
-				data.add(temp.get(ifsc_index).trim());
-				data.add(temp.get(micr_index).trim());
+		        data.addAll(temp);
 				if (ifsc.trim().length() == 11 && !(ifsc_check.contains(ifsc.trim())))
 				{
 					NACH_valid.add(data);
@@ -357,6 +348,7 @@ public class IFSC_Getter
 			ArrayList<ArrayList<ArrayList<String>>> output = insert_records(neft_file_name,0);
 			NEFT_valid.addAll(output.get(0));
 			NEFT_invalid.addAll(output.get(1));
+			NEFT_headers.addAll(output.get(2).get(0));
 			System.out.println("NEFT Duplicate_Count = "+ dup_count);
 			System.out.println("****************** NEFT COMPLETED *********************");
 			dup_count=0;
@@ -364,6 +356,7 @@ public class IFSC_Getter
 			output = insert_records(rtgs_file_name,0);
 			RTGS_valid.addAll(output.get(0));
 			RTGS_invalid.addAll(output.get(1));
+			RTGS_headers.addAll(output.get(2).get(0));
 			System.out.println("RTGS Duplicate_Count = "+ dup_count);
 			System.out.println("****************** RTGS COMPLETED *********************");
 			dup_count=0;
@@ -375,7 +368,7 @@ public class IFSC_Getter
 			System.out.println(NEFT_valid.size()+"\t - \t"+NEFT_invalid.size());
 			System.out.println(RTGS_valid.size()+"\t - \t"+RTGS_invalid.size());
 			System.out.println(NACH_valid.size()+"\t - \t"+NACH_invalid.size());
-			insert_data(NEFT_valid,RTGS_valid,NACH_valid,NEFT_invalid,RTGS_invalid,NACH_invalid);
+			insert_data(NEFT_headers,RTGS_headers,NACH_headers,NEFT_valid,RTGS_valid,NACH_valid,NEFT_invalid,RTGS_invalid,NACH_invalid);
 		}
 		catch(Exception e)
 		{
