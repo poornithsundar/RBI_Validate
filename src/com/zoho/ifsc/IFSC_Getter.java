@@ -216,7 +216,7 @@ public class IFSC_Getter
 			System.out.println("****************** NEFT STARTED *********************");
 			//NEFT file header list
 			//Using different lists because files used different names for columns required (Eg: City column is named as 'CITY' in NEFT but as 'CENTRE' in RTGS)
-			NEFT_headers.add("Name");
+			NEFT_headers.add("Bank");
 			NEFT_headers.add("Ifsc");
 			NEFT_headers.add("Micr");
 			NEFT_headers.add("Branch");
@@ -242,7 +242,7 @@ public class IFSC_Getter
 			RTGS_headers.add("Centre");
 			RTGS_headers.add("District");
 			RTGS_headers.add("State");
-			output = GET_DATA.insert_records(rtgs_file_name,1,RTGS_headers);
+			output = GET_DATA.insert_records(rtgs_file_name,0,RTGS_headers);
 			RTGS_valid.addAll(output.get(0));
 			RTGS_invalid.addAll(output.get(1));
 			rtgs_duplicate_count = dup_count;

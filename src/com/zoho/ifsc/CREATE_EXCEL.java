@@ -19,7 +19,18 @@ public class CREATE_EXCEL {
 				for(int j=0;j<data.get(i).size();j++)
 				{
 					Cell c3 = r1.createCell(j);
-					c3.setCellValue(data.get(i).get(j));
+					if(j==2 && data.get(i).get(j)=="")
+					{
+						c3.setCellValue("NA");
+					}
+					else if(j==2 && data.get(i).get(j).length()==12)
+					{
+						c3.setCellValue(Double.parseDouble(data.get(i).get(j)));
+					}
+					else
+					{
+						c3.setCellValue(data.get(i).get(j));
+					}
 				}
 			}
 		}
