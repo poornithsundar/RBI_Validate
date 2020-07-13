@@ -2,6 +2,7 @@ package com.zoho.ifsc;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import com.zoho.ifsc.IFSC_Getter;
 import org.apache.poi.ss.usermodel.Cell;
@@ -25,7 +26,8 @@ public class CREATE_EXCEL {
 					}
 					else if(j==2 && data.get(i).get(j).length()==12)
 					{
-						c3.setCellValue(Double.parseDouble(data.get(i).get(j)));
+						Double value = Double.parseDouble(data.get(i).get(j));
+						c3.setCellValue(new BigDecimal(value).toString()); // Converting exponential cases into direct decimals
 					}
 					else
 					{
