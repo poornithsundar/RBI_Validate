@@ -242,7 +242,7 @@ public class IFSC_Getter
 			RTGS_headers.add("Centre");
 			RTGS_headers.add("District");
 			RTGS_headers.add("State");
-			output = GET_DATA.insert_records(rtgs_file_name,0,RTGS_headers);
+			output = GET_DATA.insert_records(rtgs_file_name,1,RTGS_headers);
 			RTGS_valid.addAll(output.get(0));
 			RTGS_invalid.addAll(output.get(1));
 			rtgs_duplicate_count = dup_count;
